@@ -1,0 +1,58 @@
+# Virtual Environment
+.venv/
+venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Large Model Files - Using Git LFS instead
+# artifacts/bert_model/model.safetensors
+# artifacts/*.h5  
+# artifacts/*.joblib
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Data files (if too large)
+data/*.csv
+!data/sample_data.csv
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp

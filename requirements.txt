@@ -1,0 +1,25 @@
+# Core
+numpy
+pandas
+scikit-learn
+nltk
+tldextract
+beautifulsoup4
+joblib
+matplotlib
+
+# Deep learning (optional but recommended)
+tensorflow>=2.15
+torch
+transformers
+
+# Explainability
+lime
+shap
+
+# App & APIs
+streamlit
+requests
+
+# Hugging Face datasets (optional for dataset loading)
+datasets
