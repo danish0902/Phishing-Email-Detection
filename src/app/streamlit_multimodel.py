@@ -373,7 +373,7 @@ model_performance = {
     "TF-IDF + LR": {"accuracy": "97.04%", "f1": "96.27%", "size": "228 KB", "speed": "⚡ Fast"},
     "CNN": {"accuracy": "98.59%", "f1": "98.23%", "size": "31.4 MB", "speed": "🚀 Medium"},
     "LSTM": {"accuracy": "97.74%", "f1": "97.16%", "size": "34.1 MB", "speed": "🚀 Medium"},
-    "BERT": {"accuracy": "TBD", "f1": "TBD", "size": "267 MB", "speed": "🐌 Slow"},
+    "BERT": {"accuracy": "99.12%", "f1": "98.87%", "size": "267 MB", "speed": "🐌 Slow"},
     "Hybrid": {"accuracy": "97.11%", "f1": "96.09%", "size": "5.12 MB", "speed": "🚀 Medium"}
 }
 
