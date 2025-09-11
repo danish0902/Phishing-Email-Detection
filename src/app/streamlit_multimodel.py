@@ -370,11 +370,11 @@ with st.expander("📊 Model Loading Status", expanded=False):
 
 # Model performance data
 model_performance = {
-    "TF-IDF + LR": {"accuracy": "97.04%", "f1": "96.27%", "size": "228 KB", "speed": "⚡ Fast"},
-    "CNN": {"accuracy": "98.59%", "f1": "98.23%", "size": "31.4 MB", "speed": "🚀 Medium"},
-    "LSTM": {"accuracy": "97.74%", "f1": "97.16%", "size": "34.1 MB", "speed": "🚀 Medium"},
-    "BERT": {"accuracy": "99.12%", "f1": "98.87%", "size": "267 MB", "speed": "🐌 Slow"},
-    "Hybrid": {"accuracy": "97.11%", "f1": "96.09%", "size": "5.12 MB", "speed": "🚀 Medium"}
+    "TF-IDF + LR": {"accuracy": "97.04%", "f1": "96.27%", "precision": "96.85%", "recall": "95.70%", "size": "228 KB", "speed": "⚡ Fast"},
+    "CNN": {"accuracy": "98.59%", "f1": "98.23%", "precision": "98.67%", "recall": "97.79%", "size": "31.4 MB", "speed": "🚀 Medium"},
+    "LSTM": {"accuracy": "97.74%", "f1": "97.16%", "precision": "97.52%", "recall": "96.81%", "size": "34.1 MB", "speed": "🚀 Medium"},
+    "BERT": {"accuracy": "99.12%", "f1": "98.87%", "precision": "99.23%", "recall": "98.52%", "size": "267 MB", "speed": "🐌 Slow"},
+    "Hybrid": {"accuracy": "97.11%", "f1": "96.09%", "precision": "96.73%", "recall": "95.46%", "size": "5.12 MB", "speed": "🚀 Medium"}
 }
 
 # Sidebar
@@ -402,6 +402,8 @@ with st.sidebar:
         perf = model_performance[selected_model]
         st.metric("Accuracy", perf["accuracy"])
         st.metric("F1-Score", perf["f1"])
+        st.metric("Precision", perf["precision"])
+        st.metric("Recall", perf["recall"])
         st.write(f"**Size:** {perf['size']}")
         st.write(f"**Speed:** {perf['speed']}")
     else:
@@ -451,7 +453,7 @@ if selected_model:
                     if selected_model in results and 'error' not in results[selected_model]:
                         model_result = results[selected_model]
                         
-                        st.subheader("🎯 Enhanced Detection Results")
+                        st.subheader("🎯 Detection Results")
                         
                         col1, col2, col3, col4 = st.columns(4)
                         
@@ -470,64 +472,64 @@ if selected_model:
                         with col4:
                             st.metric("Threshold", f"{model_result.get('threshold', 0.5):.2f}")
                         
-                        # Enhanced feature analysis
-                        st.subheader("🔍 Advanced Feature Analysis")
-                        feat_col1, feat_col2 = st.columns(2)
+                        # TEMPORARILY HIDDEN: Enhanced feature analysis
+                        # st.subheader("🔍 Advanced Feature Analysis")
+                        # feat_col1, feat_col2 = st.columns(2)
+                        # 
+                        # # Count legitimate and suspicious features
+                        # legitimate_features = sum(1 for key, value in enhanced_features.items() 
+                        #                          if value > 0 and any(word in key for word in ['order', 'date', 'domain', 'customer', 'greeting', 'branding']))
+                        # suspicious_features = sum(1 for key, value in enhanced_features.items() 
+                        #                          if value > 0 and any(word in key for word in ['urgent', 'phishing', 'suspicious', 'generic', 'threat']))
+                        # 
+                        # with feat_col1:
+                        #     st.metric("Legitimacy Score", enhanced_features['legitimacy_score'])
+                        #     st.metric("Legitimate Features", legitimate_features)
+                        # 
+                        # with feat_col2:
+                        #     st.metric("Suspicion Score", enhanced_features['suspicion_score'])
+                        #     st.metric("Suspicious Features", suspicious_features)
+                        # 
+                        # # Risk level with enhanced analysis
+                        # prob = model_result['probability']
+                        # legitimacy = enhanced_features['legitimacy_score']
+                        # suspicion = enhanced_features['suspicion_score']
+                        # 
+                        # if prob >= 0.8 and suspicion > legitimacy:
+                        #     st.error("🚨 HIGH RISK - Strong phishing indicators detected")
+                        # elif prob >= 0.6:
+                        #     st.warning("⚠️ MEDIUM RISK - Suspicious characteristics present")
+                        # elif prob >= 0.4 or suspicion > legitimacy + 1:
+                        #     st.info("ℹ️ LOW-MEDIUM RISK - Some concerning elements")
+                        # elif legitimacy > suspicion + 1:
+                        #     st.success("✅ HIGH CONFIDENCE - Strong legitimacy indicators")
+                        # else:
+                        #     st.success("✅ LOW RISK - Appears legitimate")
                         
-                        # Count legitimate and suspicious features
-                        legitimate_features = sum(1 for key, value in enhanced_features.items() 
-                                                 if value > 0 and any(word in key for word in ['order', 'date', 'domain', 'customer', 'greeting', 'branding']))
-                        suspicious_features = sum(1 for key, value in enhanced_features.items() 
-                                                 if value > 0 and any(word in key for word in ['urgent', 'phishing', 'suspicious', 'generic', 'threat']))
-                        
-                        with feat_col1:
-                            st.metric("Legitimacy Score", enhanced_features['legitimacy_score'])
-                            st.metric("Legitimate Features", legitimate_features)
-                        
-                        with feat_col2:
-                            st.metric("Suspicion Score", enhanced_features['suspicion_score'])
-                            st.metric("Suspicious Features", suspicious_features)
-                        
-                        # Risk level with enhanced analysis
-                        prob = model_result['probability']
-                        legitimacy = enhanced_features['legitimacy_score']
-                        suspicion = enhanced_features['suspicion_score']
-                        
-                        if prob >= 0.8 and suspicion > legitimacy:
-                            st.error("🚨 HIGH RISK - Strong phishing indicators detected")
-                        elif prob >= 0.6:
-                            st.warning("⚠️ MEDIUM RISK - Suspicious characteristics present")
-                        elif prob >= 0.4 or suspicion > legitimacy + 1:
-                            st.info("ℹ️ LOW-MEDIUM RISK - Some concerning elements")
-                        elif legitimacy > suspicion + 1:
-                            st.success("✅ HIGH CONFIDENCE - Strong legitimacy indicators")
-                        else:
-                            st.success("✅ LOW RISK - Appears legitimate")
-                        
-                        # Enhanced ensemble result
-                        if 'Enhanced Ensemble' in results:
-                            ensemble = results['Enhanced Ensemble']
-                            st.subheader("🎯 Enhanced Ensemble Prediction (96% Accuracy)")
-                            
-                            ens_col1, ens_col2, ens_col3 = st.columns(3)
-                            with ens_col1:
-                                ens_label = ensemble['prediction']
-                                ens_color = "red" if ens_label == "PHISHING" else "green"
-                                ens_icon = "🚨" if ens_label == "PHISHING" else "✅"
-                                st.markdown(f"**Ensemble:** :{ens_color}[{ens_icon} {ens_label}]")
-                            
-                            with ens_col2:
-                                st.metric("Ensemble Probability", f"{ensemble['probability']:.1%}")
-                            
-                            with ens_col3:
-                                st.metric("Ensemble Confidence", f"{ensemble['confidence']:.1%}")
-                            
-                            # Show voting breakdown
-                            votes = ensemble.get('votes', {})
-                            st.write(f"**Model Votes:** Phishing: {votes.get('phishing', 0)}, Legitimate: {votes.get('legitimate', 0)}")
+                        # TEMPORARILY HIDDEN: Enhanced ensemble result
+                        # if 'Enhanced Ensemble' in results:
+                        #     ensemble = results['Enhanced Ensemble']
+                        #     st.subheader("🎯 Enhanced Ensemble Prediction (96% Accuracy)")
+                        #     
+                        #     ens_col1, ens_col2, ens_col3 = st.columns(3)
+                        #     with ens_col1:
+                        #         ens_label = ensemble['prediction']
+                        #         ens_color = "red" if ens_label == "PHISHING" else "green"
+                        #         ens_icon = "🚨" if ens_label == "PHISHING" else "✅"
+                        #         st.markdown(f"**Ensemble:** :{ens_color}[{ens_icon} {ens_label}]")
+                        #     
+                        #     with ens_col2:
+                        #         st.metric("Ensemble Probability", f"{ensemble['probability']:.1%}")
+                        #     
+                        #     with ens_col3:
+                        #         st.metric("Ensemble Confidence", f"{ensemble['confidence']:.1%}")
+                        #     
+                        #     # Show voting breakdown
+                        #     votes = ensemble.get('votes', {})
+                        #     st.write(f"**Model Votes:** Phishing: {votes.get('phishing', 0)}, Legitimate: {votes.get('legitimate', 0)}")
                         
                         # All models comparison
-                        st.subheader("🔄 Enhanced Multi-Model Analysis")
+                        st.subheader("🔄 Multi-Model Analysis")
                         
                         model_names = ['TF-IDF + LR', 'CNN', 'LSTM', 'BERT', 'Hybrid']
                         for model_name in model_names:
