@@ -88,37 +88,47 @@ def create_hybrid_model(max_words, max_len, num_url_features, embed_dim=128):
     return model
 
 def main(args):
-    # Load pre-split training data
+    # Load pre-split training and validation data (80/10/10 split)
     train_df = pd.read_csv(args.train_data)
+    val_df = pd.read_csv(args.val_data)
     
-    # Extract URL features BEFORE text cleaning
-    url_features = train_df[args.text_col].astype(str).apply(extract_url_features)
-    url_features_array = np.array(url_features.tolist())
+    print(f"Training samples: {len(train_df)}")
+    print(f"Validation samples: {len(val_df)}")
+    
+    # Extract URL features BEFORE text cleaning for both sets
+    train_url_features = train_df[args.text_col].astype(str).apply(extract_url_features)
+    val_url_features = val_df[args.text_col].astype(str).apply(extract_url_features)
+    
+    X_train_url = np.array(train_url_features.tolist())
+    X_val_url = np.array(val_url_features.tolist())
     
     # Clean text using existing preprocessing
     train_df[args.text_col] = train_df[args.text_col].astype(str).apply(clean_text)
+    val_df[args.text_col] = val_df[args.text_col].astype(str).apply(clean_text)
     
-    X_text = train_df[args.text_col].values
-    X_url = url_features_array
-    y = train_df[args.label_col].values
+    X_train_text = train_df[args.text_col].values
+    X_val_text = val_df[args.text_col].values
+    y_train = train_df[args.label_col].values
+    y_val = val_df[args.label_col].values
     
-    # Tokenize text data
+    # Tokenize text data (fit only on training)
     tok = Tokenizer(num_words=args.vocab_size, oov_token="<OOV>")
-    tok.fit_on_texts(X_text)
-    seq_train = tok.texts_to_sequences(X_text)
-    X_text_padded = pad_sequences(seq_train, maxlen=args.max_len, padding="post", truncating="post")
+    tok.fit_on_texts(X_train_text)
     
-    # Scale URL features
+    # Transform both training and validation text
+    seq_train = tok.texts_to_sequences(X_train_text)
+    seq_val = tok.texts_to_sequences(X_val_text)
+    
+    X_train_text_padded = pad_sequences(seq_train, maxlen=args.max_len, padding="post", truncating="post")
+    X_val_text_padded = pad_sequences(seq_val, maxlen=args.max_len, padding="post", truncating="post")
+    
+    # Scale URL features (fit only on training)
     scaler = StandardScaler()
-    X_url_scaled = scaler.fit_transform(X_url)
-    
-    # Create validation split from training data only
-    X_text_train, X_text_val, X_url_train, X_url_val, y_train, y_val = train_test_split(
-        X_text_padded, X_url_scaled, y, test_size=0.2, random_state=42, stratify=y
-    )
+    X_train_url_scaled = scaler.fit_transform(X_train_url)
+    X_val_url_scaled = scaler.transform(X_val_url)
     
     # Create and compile model
-    num_url_features = X_url_train.shape[1]
+    num_url_features = X_train_url_scaled.shape[1]
     model = create_hybrid_model(args.vocab_size, args.max_len, num_url_features, args.embed_dim)
     
     model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
@@ -126,15 +136,15 @@ def main(args):
     # Training
     es = EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True)
     model.fit(
-        [X_text_train, X_url_train], y_train,
+        [X_train_text_padded, X_train_url_scaled], y_train,
         epochs=args.epochs,
         batch_size=args.batch_size,
-        validation_data=([X_text_val, X_url_val], y_val),
+        validation_data=([X_val_text_padded, X_val_url_scaled], y_val),
         callbacks=[es]
     )
     
-    # Evaluation
-    y_pred_proba = model.predict([X_text_val, X_url_val])
+    # Evaluation on validation set
+    y_pred_proba = model.predict([X_val_text_padded, X_val_url_scaled])
     y_pred = (y_pred_proba > 0.5).astype(int).flatten()
     
     # Calculate and display metrics
@@ -169,8 +179,9 @@ def main(args):
     print("Saved artifacts/hybrid_cnn_lstm.h5, tokenizer.joblib, url_scaler.joblib, hybrid_config.joblib")
 
 if __name__ == "__main__":
-    p = argparse.ArgumentParser(description="Train hybrid CNN+LSTM+URL model for phishing detection")
+    p = argparse.ArgumentParser(description="Train hybrid CNN+LSTM+URL model with proper train/validation split")
     p.add_argument("--train_data", default="data/train_set.csv", help="Path to training CSV file")
+    p.add_argument("--val_data", default="data/val_set.csv", help="Path to validation CSV file")
     p.add_argument("--text_col", default="Email Text", help="Name of text column")
     p.add_argument("--label_col", default="Email Type", help="Name of label column")
     p.add_argument("--vocab_size", type=int, default=20000, help="Vocabulary size")

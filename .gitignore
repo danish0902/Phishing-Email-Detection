@@ -32,6 +32,9 @@ MANIFEST
 # artifacts/*.h5  
 # artifacts/*.joblib
 
+# Artifacts folder (model files, explanations, plots)
+artifacts/
+
 # IDE
 .vscode/
 .idea/
