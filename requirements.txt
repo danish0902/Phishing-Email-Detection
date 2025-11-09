@@ -20,6 +20,7 @@ shap
 # App & APIs
 streamlit
 requests
+python-dotenv
 
 # Hugging Face datasets (optional for dataset loading)
 datasets

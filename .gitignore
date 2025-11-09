@@ -59,3 +59,15 @@ data/*.csv
 # Temporary files
 *.tmp
 *.temp
+
+# Environment variables (API keys)
+.env
+.env.local
+
+ENV_SETUP.md
+generate_confusion_matrices.py
+generate_model_scores.py
+METRICS_EXPLANATION.md
+model_evaluation_results.csv
+README.md
+confusion_matrices_all_models.png

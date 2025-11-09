@@ -6,10 +6,15 @@ Combines both streamlit_multimodel.py and streamlit_xai.py into a single interfa
 import streamlit as st
 import sys
 from pathlib import Path
+import os
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
+
+# Load environment variables from .env file in project root
+from dotenv import load_dotenv
+load_dotenv(project_root / ".env", override=True)  # Force override system variables
 
 # Import for Quick Prediction tab
 from src.app.model_loader import ModelLoader
@@ -20,7 +25,9 @@ from src.xai.lime_keras import LimeKeras
 from src.xai.lime_bert import LimeBERT
 from src.xai.lime_hybrid import LimeHybrid
 import streamlit.components.v1 as components
-import os
+
+# Import for VirusTotal integration
+from src.app.urls import extract_urls, check_virustotal, check_phishtank
 
 # ============================================================================
 # PAGE CONFIGURATION
@@ -238,6 +245,90 @@ def quick_prediction_tab():
                 st.write(f"**{model_name.upper()}:** {result['probability']*100:.2f}% phishing")
             
             st.markdown(f"**Ensemble Probability:** {ensemble_prob*100:.2f}% phishing")
+        
+        # VirusTotal URL Analysis
+        st.markdown("### 🔗 URL Threat Analysis")
+        
+        # Extract URLs from email (also get raw URLs to check for filtered ones)
+        import re
+        raw_url_pattern = re.compile(r'(https?://\S+|www\.\S+)', re.IGNORECASE)
+        raw_urls = raw_url_pattern.findall(email_text)
+        urls = extract_urls(email_text)
+        
+        # Check if some URLs were filtered
+        if raw_urls and len(raw_urls) > len(urls):
+            filtered_count = len(raw_urls) - len(urls)
+            st.warning(f"ℹ️ {filtered_count} URL(s) skipped (reserved/test domains like .example, .test, localhost)")
+        
+        if urls:
+            st.info(f"Found {len(urls)} URL(s) in email")
+            
+            # Check if VirusTotal API key is set
+            vt_api_key = os.getenv("VT_API_KEY")
+            
+            if vt_api_key:
+                with st.spinner("Checking URLs with VirusTotal..."):
+                    for url_idx, url in enumerate(urls, 1):
+                        with st.expander(f"🔗 URL {url_idx}: {url[:50]}..." if len(url) > 50 else f"🔗 URL {url_idx}: {url}", expanded=True):
+                            vt_result = check_virustotal(url, get_report=True)
+                            
+                            if vt_result["ok"]:
+                                if "report_pending" in vt_result:
+                                    # Analysis submitted but report not ready
+                                    st.info("✅ URL submitted to VirusTotal for analysis")
+                                    st.markdown(f"**Analysis ID:** `{vt_result.get('analysis_id', 'N/A')}`")
+                                    st.markdown("[Check results on VirusTotal](https://www.virustotal.com/)")
+                                    
+                                elif "stats" in vt_result:
+                                    # Full report available
+                                    stats = vt_result["stats"]
+                                    malicious = vt_result.get("malicious", 0)
+                                    suspicious = vt_result.get("suspicious", 0)
+                                    harmless = vt_result.get("harmless", 0)
+                                    undetected = vt_result.get("undetected", 0)
+                                    total = vt_result.get("total_engines", 0)
+                                    
+                                    # Determine threat level
+                                    if malicious > 0:
+                                        st.error(f"🚨 **MALICIOUS URL DETECTED**")
+                                        st.markdown(f"**{malicious}** out of **{total}** security vendors flagged this URL as malicious")
+                                    elif suspicious > 0:
+                                        st.warning(f"⚠️ **SUSPICIOUS URL**")
+                                        st.markdown(f"**{suspicious}** out of **{total}** security vendors flagged this URL as suspicious")
+                                    else:
+                                        st.success(f"✅ **URL appears safe**")
+                                        st.markdown(f"**{harmless}** out of **{total}** security vendors marked this URL as harmless")
+                                    
+                                    # Display statistics
+                                    col1, col2, col3, col4 = st.columns(4)
+                                    with col1:
+                                        st.metric("🔴 Malicious", malicious)
+                                    with col2:
+                                        st.metric("🟡 Suspicious", suspicious)
+                                    with col3:
+                                        st.metric("🟢 Harmless", harmless)
+                                    with col4:
+                                        st.metric("⚪ Undetected", undetected)
+                                    
+                                    # Add link to full report
+                                    url_id = vt_result.get("analysis_id", "")
+                                    if url_id:
+                                        st.markdown(f"[🔍 View full report on VirusTotal](https://www.virustotal.com/gui/url/{url_id})")
+                            else:
+                                st.error(f"❌ VirusTotal check failed: {vt_result.get('reason', 'Unknown error')}")
+            else:
+                st.warning("⚠️ VirusTotal API key not set. Set `VT_API_KEY` environment variable to enable URL threat checking.")
+                st.markdown("**To get a free VirusTotal API key:**")
+                st.markdown("1. Sign up at [https://www.virustotal.com/](https://www.virustotal.com/)")
+                st.markdown("2. Go to your profile → API Key")
+                st.markdown("3. Set the environment variable: `VT_API_KEY=your_api_key`")
+                
+                # Show the URLs anyway
+                st.markdown("**URLs found in email:**")
+                for url_idx, url in enumerate(urls, 1):
+                    st.code(f"{url_idx}. {url}")
+        else:
+            st.info("ℹ️ No URLs found in this email.")
 
 # ============================================================================
 # TAB 2: EXPLAINABLE AI
@@ -449,10 +540,7 @@ def main():
         <p>
             💡 <b>Tip:</b> Use Quick Prediction for fast analysis, switch to XAI tab for detailed explanations
         </p>
-        <p>
-            📚 Documentation: <code>STREAMLIT_APPS_GUIDE.md</code> | 
-            🔧 XAI Docs: <code>src/xai/README.md</code>
-        </p>
+        
     </div>
     """, unsafe_allow_html=True)
 
