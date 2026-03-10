@@ -22,5 +22,14 @@ streamlit
 requests
 python-dotenv
 
+# REST API
+fastapi
+uvicorn[standard]
+
+# Testing
+pytest
+pytest-cov
+httpx
+
 # Hugging Face datasets (optional for dataset loading)
 datasets
